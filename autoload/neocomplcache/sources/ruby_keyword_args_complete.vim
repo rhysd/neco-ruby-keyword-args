@@ -39,7 +39,7 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
     endif
 
     if line('.') > 1
-        call neocomplcache#sources#ruby_keyword_arg_complete#cache(line('.')-1)
+        call neocomplcache#sources#ruby_keyword_args_complete#cache(line('.')-1)
     endif
 
     echomsg getline('.')
@@ -49,11 +49,11 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
     return neocomplcache#keyword_filter(words, a:cur_keyword_str)
 endfunction
 
-function! neocomplcache#sources#ruby_keyword_arg_complete#define()
+function! neocomplcache#sources#ruby_keyword_args_complete#define()
     return s:source
 endfunction
 
-function! neocomplcache#sources#ruby_keyword_arg_complete#cache(line)
+function! neocomplcache#sources#ruby_keyword_args_complete#cache(line)
     if a:line == s:previous_line
         return
     endif
