@@ -8,16 +8,19 @@ let s:source = {
             \ }
 
 function! s:source.initialize()
-    " TODO : s:cache はこの時点でバッファ全体をスキャンして構築する
-    let s:cache = {}
-    let s:previous_line = 0
-endfunction
+    let s:cache = get(s:, 'cache', {})
+    let s:previous_line = get(s:, 'previous_line', 0)
 
-function! s:source.finalize()
-    unlet s:cache
-    unlet s:previous_line
+    " collect words at loading buffer
+    augroup neco-ruby-keyword-arg
+        autocmd!
+        autocmd FileType ruby
+            \ call neocomplcache#sources#ruby_keyword_args_complete#cache_buffer()
+    augroup END
+    if &filetype ==# 'ruby'
+        call neocomplcache#sources#ruby_keyword_args_complete#cache_buffer()
+    endif
 endfunction
-
 
 function! s:source.get_keyword_pos(cur_text)
     return match(a:cur_text, '\w\+$')
@@ -25,7 +28,7 @@ endfunction
 
 function! s:args_from_methods_in(text)
     let result = []
-    for [method,args] in deepcopy(items(s:cache))
+    for [method,args] in items(s:cache)
         if a:text =~# '\<'.method.'\>'
             call extend(result, args)
         endif
@@ -42,11 +45,8 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
         call neocomplcache#sources#ruby_keyword_args_complete#cache(line('.')-1)
     endif
 
-    echomsg getline('.')
-    echomsg string(s:cache)
-    let words = map( s:args_from_methods_in(getline('.')),
-                \ "{'word' : v:val, 'menu' : '[keyword-arg]'}")
-    return neocomplcache#keyword_filter(words, a:cur_keyword_str)
+    return neocomplcache#keyword_filter(s:args_from_methods_in(getline('.')), 
+                                        \ a:cur_keyword_str)
 endfunction
 
 function! neocomplcache#sources#ruby_keyword_args_complete#define()
@@ -66,9 +66,25 @@ function! neocomplcache#sources#ruby_keyword_args_complete#cache(line)
     let method = matched[1]
     let args = split(matched[2], '\s*,\s*')
 
-    let arg_list = map(args, 'matchlist(v:val, "^\\(\\l\\w*\\):\\s\\+\\(.*\\)$")[1].": "')
+    let arg_list = map( map(args, 'matchlist(v:val, "^\\(\\l\\w*\\):\\s\\+\\(.*\\)$")'),
+                        \ '{ "word" : v:val[1].": ",  "menu" : "[K] default:".v:val[2] }' )
     call extend(s:cache, {method : arg_list})
     let s:previous_line = a:line
+endfunction
+
+function! neocomplcache#sources#ruby_keyword_args_complete#cache_buffer()
+    let s:previous_line = 0
+    let last = line('$')
+    if last < 2
+        return
+    endif
+    for lnum in range(2, line('$'))
+        call neocomplcache#sources#ruby_keyword_args_complete#cache(lnum)
+    endfor
+endfunction
+
+function! neocomplcache#sources#ruby_keyword_args_complete#reset_cache()
+    let s:cache = {}
 endfunction
 
 let &cpo = s:save_cpo
