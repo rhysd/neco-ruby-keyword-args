@@ -7,7 +7,7 @@ far easy in contrast to the order of them).
 This plugin completes the name of arguments using neocomplcache.
 `[K]` in menu items are the mark of keysord-argument-complete.
 
-In following example, argument name `tsura` of the method 'test' is completing.
+In a following example, argument name `tsura` of the method 'test' is completing.
 
 ![complete a first keyword argument, 'tsura'](https://raw.github.com/rhysd/neco-ruby-keyword-args/master/screenshot.jpg)
 
