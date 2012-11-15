@@ -7,6 +7,10 @@ let s:source = {
             \   'filetypes' : { 'ruby' : 1 },
             \ }
 
+function! neocomplcache#sources#ruby_keyword_args_complete#define()
+    return exists('g:neco_ruby_keyword_args_disable') ? {} : s:source
+endfunction
+
 function! s:source.initialize()
     let s:cache = get(s:, 'cache', {})
     let s:previous_line = get(s:, 'previous_line', 0)
@@ -47,10 +51,6 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
 
     return neocomplcache#keyword_filter(s:args_from_methods_in(getline('.')), 
                                         \ a:cur_keyword_str)
-endfunction
-
-function! neocomplcache#sources#ruby_keyword_args_complete#define()
-    return s:source
 endfunction
 
 function! neocomplcache#sources#ruby_keyword_args_complete#cache(line)
