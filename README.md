@@ -1,5 +1,6 @@
-## A source of neocomplcache which completes keyword argments in Ruby
+## Completes Keyword Argments in Ruby
 
+This is a source of neocomplcache which completes keyword argments in Ruby
 Keyword arguments are available in Ruby 2.0 later.
 Keyword arguments allow us to forget the order of the arguments.
 However, we must remember the name of arguments (although this is
