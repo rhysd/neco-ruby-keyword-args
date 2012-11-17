@@ -16,13 +16,16 @@ function! s:source.initialize()
     let s:previous_line = get(s:, 'previous_line', 0)
 
     " collect words at loading buffer
-    augroup neco-ruby-keyword-arg
-        autocmd!
-        autocmd FileType ruby
-            \ call neocomplcache#sources#ruby_keyword_args_complete#cache_buffer()
-    augroup END
-    if &filetype ==# 'ruby'
-        call neocomplcache#sources#ruby_keyword_args_complete#cache_buffer()
+    if ! exists('s:neco_ruby_cache_scheduled')
+        augroup neco-ruby-keyword-arg
+            autocmd!
+            autocmd FileType ruby
+                \ call neocomplcache#sources#ruby_keyword_args_complete#cache_file(expand('%:p'))
+        augroup END
+        if &filetype ==# 'ruby'
+            call neocomplcache#sources#ruby_keyword_args_complete#cache_file(expand('%:p'))
+        endif
+        let s:neco_ruby_cache_scheduled = 1
     endif
 endfunction
 
@@ -45,20 +48,13 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
         return []
     endif
 
-    if line('.') > 1
-        call neocomplcache#sources#ruby_keyword_args_complete#cache(line('.')-1)
-    endif
-
+    call neocomplcache#sources#ruby_keyword_args_complete#cache_above_line(line('.'))
     return neocomplcache#keyword_filter(s:args_from_methods_in(getline('.')), 
                                         \ a:cur_keyword_str)
 endfunction
 
-function! neocomplcache#sources#ruby_keyword_args_complete#cache(line)
-    if a:line == s:previous_line
-        return
-    endif
-
-    let matched = matchlist(getline(a:line), '^\s*def\s\+\([[:lower:]_]\w*\)\s*[ (]\(\%(\s*,\?\s*\w\+:\s\+[^ ,\n)]\+\)\+\))\?')
+function! neocomplcache#sources#ruby_keyword_args_complete#cache(text)
+    let matched = matchlist(a:text, '^\s*def\s\+\([[:lower:]_]\w*\)\s*[ (]\(\%(\s*,\?\s*\w\+:\s\+[^ ,\n)]\+\)\+\))\?')
     if len(matched) < 3
         return
     endif
@@ -67,19 +63,35 @@ function! neocomplcache#sources#ruby_keyword_args_complete#cache(line)
     let args = split(matched[2], '\s*,\s*')
 
     let arg_list = map( map(args, 'matchlist(v:val, "^\\(\\l\\w*\\):\\s\\+\\(.*\\)$")'),
-                        \ '{ "word" : v:val[1].": ",  "menu" : "[K] default:".v:val[2] }' )
+                        \ '{ "word" : v:val[1].": ",  "menu" : "[K] ".v:val[2]." is default value" }' )
     call extend(s:cache, {method : arg_list})
-    let s:previous_line = a:line
 endfunction
 
-function! neocomplcache#sources#ruby_keyword_args_complete#cache_buffer()
-    let s:previous_line = 0
-    let last = line('$')
-    if last < 2
+function! neocomplcache#sources#ruby_keyword_args_complete#cache_above_line(line)
+    if a:line - 1 <= 0 || a:line - 1 == s:previous_line
         return
     endif
-    for lnum in range(2, line('$'))
-        call neocomplcache#sources#ruby_keyword_args_complete#cache(lnum)
+    let s:previous_line = a:line - 1
+    call neocomplcache#sources#ruby_keyword_args_complete#cache(getline(a:line - 1))
+endfunction
+
+function! neocomplcache#sources#ruby_keyword_args_complete#cache_file(file)
+    if ! filereadable(a:file)
+        return
+    endif
+
+    let parent_dir = fnamemodify(a:file, ':p:h').'/'
+
+    for line in readfile(a:file)
+        if line =~# '^\s*require\s\+'
+            let require_relative = matchlist(line, "^\\s*require\\s\\+[\"']\\(.\\+\\)[\"']")[1].'.rb'
+            let require_target = fnamemodify(parent_dir . require_relative, ':p')
+            if filereadable(require_target)
+                call neocomplcache#sources#ruby_keyword_args_complete#cache_file(require_target)
+            endif
+        elseif line =~# '^\s*def\s\+'
+            call neocomplcache#sources#ruby_keyword_args_complete#cache(line)
+        endif
     endfor
 endfunction
 
