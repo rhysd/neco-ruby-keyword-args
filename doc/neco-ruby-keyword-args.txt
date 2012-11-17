@@ -7,6 +7,7 @@ Introduction    |neco-ruby-keyword-args-introduction|
 Use Case        |neco-ruby-keyword-args-use-case|
 Variables       |neco-ruby-keyword-args-variables|
 Functions       |neco-ruby-keyword-args-functions|
+Dependency      |neco-ruby-keyword-args-dependency|
 License         |neco-ruby-keyword-args-license|
 
 
@@ -75,6 +76,13 @@ neocomplcache#sources#ruby_keyword_args_complete#reset_cache()
 
     This function resets the cache of completion words which
     |neco-ruby-keyword-args| collected.
+
+
+==============================================================================
+DEPENDENCY                                 *neco-ruby-keyword-args-dependency*
+
+|neco-ruby-keyword-args| is the source of |neocomplcache|. You should install 
+|neocomplcache| before installing |neco-ruby-keyword-args|.
 
 
 ==============================================================================
