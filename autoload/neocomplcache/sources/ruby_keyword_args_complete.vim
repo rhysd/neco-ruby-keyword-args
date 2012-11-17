@@ -16,13 +16,16 @@ function! s:source.initialize()
     let s:previous_line = get(s:, 'previous_line', 0)
 
     " collect words at loading buffer
-    augroup neco-ruby-keyword-arg
-        autocmd!
-        autocmd FileType ruby
-            \ call neocomplcache#sources#ruby_keyword_args_complete#cache_buffer()
-    augroup END
-    if &filetype ==# 'ruby'
-        call neocomplcache#sources#ruby_keyword_args_complete#cache_buffer()
+    if ! exists('s:neco_ruby_cache_scheduled')
+        augroup neco-ruby-keyword-arg
+            autocmd!
+            autocmd FileType ruby
+                \ call neocomplcache#sources#ruby_keyword_args_complete#cache_file(expand('%:p'))
+        augroup END
+        if &filetype ==# 'ruby'
+            call neocomplcache#sources#ruby_keyword_args_complete#cache_file(expand('%:p'))
+        endif
+        let s:neco_ruby_cache_scheduled = 1
     endif
 endfunction
 
@@ -68,18 +71,25 @@ function! neocomplcache#sources#ruby_keyword_args_complete#cache_above_line(line
     if a:line - 1 <= 0 || a:line - 1 == s:previous_line
         return
     endif
-    let s:previous_line = a:line
-    call neocomplcache#sources#ruby_keyword_args_complete#cache(getline(a:line))
+    let s:previous_line = a:line - 1
+    call neocomplcache#sources#ruby_keyword_args_complete#cache(getline(a:line - 1))
 endfunction
 
-function! neocomplcache#sources#ruby_keyword_args_complete#cache_buffer()
-    let s:previous_line = 0
-    let last = line('$')
-    if last < 2
+function! neocomplcache#sources#ruby_keyword_args_complete#cache_file(file)
+    if ! filereadable(a:file)
         return
     endif
-    for lnum in range(1, line('$'))
-        call neocomplcache#sources#ruby_keyword_args_complete#cache(getline(lnum))
+
+    let parent_dir = fnamemodify(a:file, ':p:h')
+
+    for line in readfile(a:file)
+        if line =~# '^\s*require\s\+'
+            let require = matchlist(line, "^\\s*require\\s\\+[\"']\\(.\\+\\)[\"']")[1]
+            if filereadable(parent_dir . require)
+            endif
+        elseif line =~# '^\s*def\s\+'
+            call neocomplcache#sources#ruby_keyword_args_complete#cache(line)
+        endif
     endfor
 endfunction
 
