@@ -12,7 +12,6 @@ In a following example, argument name `tsura` of the method `test` is completing
 
 ![complete a first keyword argument, 'tsura'](https://raw.github.com/rhysd/neco-ruby-keyword-args/master/screenshot.jpg)
 
-
 This source now can completes keyword arguments of the methods from
 - the buffer you are editting
 - files required in your buffer recursively
