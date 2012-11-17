@@ -63,7 +63,7 @@ function! neocomplcache#sources#ruby_keyword_args_complete#cache(text)
     let args = split(matched[2], '\s*,\s*')
 
     let arg_list = map( map(args, 'matchlist(v:val, "^\\(\\l\\w*\\):\\s\\+\\(.*\\)$")'),
-                        \ '{ "word" : v:val[1].": ",  "menu" : "[K] default:".v:val[2] }' )
+                        \ '{ "word" : v:val[1].": ",  "menu" : "[K] ".v:val[2]." is default value" }' )
     call extend(s:cache, {method : arg_list})
 endfunction
 
