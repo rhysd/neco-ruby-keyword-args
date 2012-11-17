@@ -45,20 +45,13 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
         return []
     endif
 
-    if line('.') > 1
-        call neocomplcache#sources#ruby_keyword_args_complete#cache(line('.')-1)
-    endif
-
+    call neocomplcache#sources#ruby_keyword_args_complete#cache_above_line(line('.'))
     return neocomplcache#keyword_filter(s:args_from_methods_in(getline('.')), 
                                         \ a:cur_keyword_str)
 endfunction
 
-function! neocomplcache#sources#ruby_keyword_args_complete#cache(line)
-    if a:line == s:previous_line
-        return
-    endif
-
-    let matched = matchlist(getline(a:line), '^\s*def\s\+\([[:lower:]_]\w*\)\s*[ (]\(\%(\s*,\?\s*\w\+:\s\+[^ ,\n)]\+\)\+\))\?')
+function! neocomplcache#sources#ruby_keyword_args_complete#cache(text)
+    let matched = matchlist(a:text, '^\s*def\s\+\([[:lower:]_]\w*\)\s*[ (]\(\%(\s*,\?\s*\w\+:\s\+[^ ,\n)]\+\)\+\))\?')
     if len(matched) < 3
         return
     endif
@@ -69,7 +62,14 @@ function! neocomplcache#sources#ruby_keyword_args_complete#cache(line)
     let arg_list = map( map(args, 'matchlist(v:val, "^\\(\\l\\w*\\):\\s\\+\\(.*\\)$")'),
                         \ '{ "word" : v:val[1].": ",  "menu" : "[K] default:".v:val[2] }' )
     call extend(s:cache, {method : arg_list})
+endfunction
+
+function! neocomplcache#sources#ruby_keyword_args_complete#cache_above_line(line)
+    if a:line - 1 <= 0 || a:line - 1 == s:previous_line
+        return
+    endif
     let s:previous_line = a:line
+    call neocomplcache#sources#ruby_keyword_args_complete#cache(getline(a:line))
 endfunction
 
 function! neocomplcache#sources#ruby_keyword_args_complete#cache_buffer()
@@ -78,8 +78,8 @@ function! neocomplcache#sources#ruby_keyword_args_complete#cache_buffer()
     if last < 2
         return
     endif
-    for lnum in range(2, line('$'))
-        call neocomplcache#sources#ruby_keyword_args_complete#cache(lnum)
+    for lnum in range(1, line('$'))
+        call neocomplcache#sources#ruby_keyword_args_complete#cache(getline(lnum))
     endfor
 endfunction
 
