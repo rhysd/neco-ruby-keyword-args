@@ -80,12 +80,14 @@ function! neocomplcache#sources#ruby_keyword_args_complete#cache_file(file)
         return
     endif
 
-    let parent_dir = fnamemodify(a:file, ':p:h')
+    let parent_dir = fnamemodify(a:file, ':p:h').'/'
 
     for line in readfile(a:file)
         if line =~# '^\s*require\s\+'
-            let require = matchlist(line, "^\\s*require\\s\\+[\"']\\(.\\+\\)[\"']")[1]
-            if filereadable(parent_dir . require)
+            let require_relative = matchlist(line, "^\\s*require\\s\\+[\"']\\(.\\+\\)[\"']")[1].'.rb'
+            let require_target = fnamemodify(parent_dir . require_relative, ':p')
+            if filereadable(require_target)
+                call neocomplcache#sources#ruby_keyword_args_complete#cache_file(require_target)
             endif
         elseif line =~# '^\s*def\s\+'
             call neocomplcache#sources#ruby_keyword_args_complete#cache(line)
